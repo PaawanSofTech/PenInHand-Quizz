@@ -16,7 +16,7 @@ const QuizPage = ({ subject }) => {
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/quiz/${subject}`);
+        const response = await axios.get(`http://https://peninhand-quizz.onrender.com/quiz/${subject}`);
         setQuizData(response.data);
       } catch (error) {
         console.error('Error fetching quiz data:', error);

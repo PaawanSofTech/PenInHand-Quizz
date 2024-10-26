@@ -48,7 +48,7 @@ const AdminPanel = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData);
+      const response = await axios.post('http://https://peninhand-quizz.onrender.com/upload', formData);
       if (response.status === 200) {
         alert("Question uploaded successfully!");
         window.location.reload(); // Refresh the page after successful upload

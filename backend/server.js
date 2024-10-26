@@ -2,13 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+require('dotenv').config();  // Load environment variables from .env
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '500mb' }));
 
 // MongoDB connection and schema setup
-mongoose.connect('mongodb://localhost:27017/quizApp', {
+mongoose.connect(process.env.MONGODB_URI, {  // Use the environment variable
   useNewUrlParser: true,
   useUnifiedTopology: true,
 }).then(() => console.log('Connected to MongoDB'))
@@ -69,6 +70,7 @@ app.get('/questions', async (req, res) => {
     res.status(500).json({ message: 'Error fetching questions' });
   }
 });
+
 // Route to update a question based on its ID
 app.put('/questions/:id', async (req, res) => {
   const { id } = req.params;
