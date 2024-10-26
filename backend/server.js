@@ -8,12 +8,16 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '500mb' }));
 
-// MongoDB connection and schema setup
-mongoose.connect(process.env.MONGODB_URI, {  // Use the environment variable
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('Connected to MongoDB'))
-  .catch((error) => console.error('MongoDB connection error:', error));
+  serverSelectionTimeoutMS: 30000,  // 30 seconds
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((error) => {
+  console.error('MongoDB connection error:', error);
+});
+
 
 const questionSchema = new mongoose.Schema({
   quesID: { type: String, unique: true },  // Unique identifier for each question
