@@ -27,7 +27,7 @@ const QuestionTable = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/questions");
+        const response = await axios.get("${process.env.REACT_APP_API_URL}:5000/questions");
         setQuestions(response.data);
       } catch (error) {
         console.error("Error fetching questions:", error);
@@ -89,7 +89,7 @@ const QuestionTable = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/questions/${selectedQuestion._id}`,
+        `${process.env.REACT_APP_API_URL}:5000/questions/${selectedQuestion._id}`,
         updatedData
       );
 
@@ -115,7 +115,7 @@ const QuestionTable = () => {
   const handleDelete = async () => {
     try {
       await axios.delete(
-        `http://localhost:5000/questions/${selectedQuestion._id}`
+        `${process.env.REACT_APP_API_URL}:5000/questions/${selectedQuestion._id}`
       );
       setQuestions((prevQuestions) =>
         prevQuestions.filter((q) => q._id !== selectedQuestion._id)
