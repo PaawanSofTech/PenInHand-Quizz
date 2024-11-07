@@ -44,22 +44,20 @@ const AdminPanel = () => {
     }
   };
 
-// Handle form submission
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/upload`; // Use the full URL from the .env file
-    const response = await axios.post(apiUrl, formData);
-    if (response.status === 200) {
-      alert("Question uploaded successfully!");
-      window.location.reload(); // Refresh the page after successful upload
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/upload', formData);
+      if (response.status === 200) {
+        alert("Question uploaded successfully!");
+        window.location.reload(); // Refresh the page after successful upload
+      }
+     } catch (error) {
+      console.error("Error uploading question:", error);
+      alert("Failed to upload question.");
     }
-  } catch (error) {
-    console.error("Error uploading question:", error);
-    alert("Failed to upload question.");
-  }
-};
-
+  };
 
   return (
     <Box sx={{ padding: 4 }}>

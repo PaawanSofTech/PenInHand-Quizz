@@ -18,6 +18,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', error);
 });
 
+
 const questionSchema = new mongoose.Schema({
   quesID: { type: String, unique: true },  // Unique identifier for each question
   course: String,
@@ -37,11 +38,6 @@ const questionSchema = new mongoose.Schema({
 });
 
 const Question = mongoose.model('Question', questionSchema);
-
-// Health check route
-app.get('/', (req, res) => {
-  res.send('Server is running and reachable');
-});
 
 // Route to upload a new quiz question
 app.post('/upload', async (req, res) => {
