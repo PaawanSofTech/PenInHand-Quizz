@@ -39,6 +39,10 @@ const questionSchema = new mongoose.Schema({
 
 const Question = mongoose.model('Question', questionSchema);
 
+app.get('/', (req, res) => {
+  res.send("Server running & Reachable");
+});
+
 // Route to upload a new quiz question
 app.post('/upload', async (req, res) => {
   const { course, subject, topic, chapter, tags, questionContent, solutionContent, correctOption } = req.body;
