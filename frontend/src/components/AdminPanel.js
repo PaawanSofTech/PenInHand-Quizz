@@ -139,8 +139,14 @@ const AdminPanel = () => {
     reader.readAsDataURL(file);
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false); // Track the submission state
+
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevents default form submission behavior
+
+    // Disable the button and show "Please wait" notification
+    setIsSubmitting(true);
+    enqueueSnackbar("Please wait, uploading your question...", { variant: "info" });
 
     try {
       // Send a POST request with formData
@@ -172,6 +178,9 @@ const AdminPanel = () => {
       // Log error and show failure notification
       console.error("Error uploading question:", error);
       enqueueSnackbar("Failed to upload question.", { variant: "error" });
+    } finally {
+      // Re-enable the button after request is completed
+      setIsSubmitting(false);
     }
   };
 
@@ -324,22 +333,29 @@ const AdminPanel = () => {
               )}
 
               <Button
-                variant="contained"
-                color="primary"
-                type="submit"
-                sx={{
-                  mt: 3,
-                  borderRadius: 8,
-                  padding: "12px 24px",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    transform: "scale(1.05)",
-                    backgroundColor: theme.palette.primary.dark,
-                  },
-                }}
-              >
-                Submit Question
-              </Button>
+  variant="contained"
+  color="primary"
+  type="submit"
+  sx={{
+    mt: 3,
+    borderRadius: 8,
+    padding: "12px 24px",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      transform: "scale(1.05)",
+      backgroundColor: theme.palette.primary.dark,
+    },
+    // If the button is disabled, we can also adjust the style to indicate it
+    ...(isSubmitting && {
+      backgroundColor: theme.palette.grey[500], // Change color when disabled
+      cursor: "not-allowed", // Show not-allowed cursor
+    }),
+  }}
+  disabled={isSubmitting} // Disable the button when submitting
+>
+  {isSubmitting ? "Please wait..." : "Submit Question"} {/* Change text when submitting */}
+</Button>
+
             </form>
           </Card>
         </Container>
