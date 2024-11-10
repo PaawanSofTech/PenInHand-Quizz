@@ -8,28 +8,11 @@ function App() {
   return (
     <Router>
       <div className="App">
-        {/* Navigation Bar */}
-        <nav>
-          <ul>
-            <li>
-              <Link to="/admin">Admin Panel</Link>
-            </li>
-            <li>
-              <Link to="/quiz">Take Quiz</Link>
-            </li>
-            <li>
-              <Link to="/questions">Manage Questions</Link>  {/* Link to QuestionTable page */}
-            </li>
-          </ul>
-        </nav>
-
+        
         {/* Routes for different pages */}
         <Routes>
           {/* Admin panel for uploading quiz questions */}
           <Route path="/admin" element={<AdminPanel />} />
-
-          {/* Quiz page to display and take quiz */}
-          <Route path="/quiz" element={<QuizPage subject="Maths" />} />
 
           {/* Question management page to view and update questions */}
           <Route path="/questions" element={<QuestionTable />} />  {/* New Route for QuestionTable */}

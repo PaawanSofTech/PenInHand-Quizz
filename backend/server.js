@@ -18,24 +18,54 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', error);
 });
 
-
+// Update questionSchema to include questionType with default "MCQ"
 const questionSchema = new mongoose.Schema({
-  quesID: { type: String, unique: true },  // Unique identifier for each question
-  course: String,
-  subject: String,
-  topic: String,
-  chapter: String,
+  quesID: { type: String, unique: true },
+  course: {
+    type: String,
+    required: [true, 'Course is required'], // Make course required
+  },
+  subject: {
+    type: String,
+    required: [true, 'Subject is required'], // Make subject required
+  },
+  topic: {
+    type: String,
+    required: [true, 'Topic is required'], // Make topic required
+  },
+  chapter: {
+    type: String,
+    required: [true, 'Chapter is required'], // Make chapter required
+  },
   tags: String,
   questionContent: {
     type: String,
-    required: true
+    required: [true, 'Question content is required'], // Make questionContent required
   },
   solutionContent: {
     type: String,
-    required: true
+    required: [true, 'Solution content is required'], // Make solutionContent required
   },
-  correctOption: String,  // Store correct option here
+  correctOption: {
+    type: String,
+    required: [true, 'Correct option is required'], // Make correctOption required
+  },
+  questionType: {
+    type: String,
+    enum: ["MCQ", "Numerical"],
+    default: "MCQ",
+    required: [true, 'Question type is required'], // Make questionType required
+  },
+  startingRange: {
+    type: String,
+    required: function() { return this.questionType === 'Numerical'; } // Make startingRange required if questionType is Numerical
+  },
+  endingRange: {
+    type: String,
+    required: function() { return this.questionType === 'Numerical'; } // Make endingRange required if questionType is Numerical
+  }
 });
+
 
 const Question = mongoose.model('Question', questionSchema);
 
@@ -43,20 +73,23 @@ app.get('/', (req, res) => {
   res.send("Server running & Reachable");
 });
 
-// Route to upload a new quiz question
+// Update the upload route to include questionType
 app.post('/upload', async (req, res) => {
-  const { course, subject, topic, chapter, tags, questionContent, solutionContent, correctOption } = req.body;
+  const { course, subject, topic, chapter, tags, questionContent, solutionContent, correctOption, questionType, startingRange, endingRange } = req.body;
 
   const newQuestion = new Question({
-    quesID: uuidv4(),  // Generate a unique quesID for each question
+    quesID: uuidv4(),
     course,
     subject,
     topic,
-    chapter,  
+    chapter,
     tags,
-    questionContent,  
+    questionContent,
     solutionContent,
-    correctOption,  // Save the correct option field
+    correctOption,
+    questionType,  // Include questionType in the new question data
+    startingRange,
+    endingRange
   });
 
   try {
@@ -68,7 +101,7 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-// Route to fetch all questions for the data table
+// Route to fetch all questions for the data table, including questionType
 app.get('/questions', async (req, res) => {
   try {
     const questions = await Question.find();
@@ -93,6 +126,51 @@ app.put('/questions/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating question:', error);
     res.status(500).json({ message: 'Error updating question' });
+  }
+});
+
+// Route to delete a question
+app.delete('/questions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedQuestion = await Question.findByIdAndDelete(id);
+    if (!deletedQuestion) {
+      return res.status(404).json({ message: 'Question not found' });
+    }
+    res.status(200).json({ message: 'Question deleted successfully' });
+  } catch (error) {
+    console.error("Error deleting question:", error);
+    res.status(500).json({ message: 'Error deleting question' });
+  }
+});
+
+// server.js
+app.get("/suggestions/subjects", async (req, res) => {
+  try {
+    const subjects = ["Physics", "Chemistry", "Mathematics", "Biology"]; // Static for PCMB
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching subjects" });
+  }
+});
+
+app.get("/suggestions/chapters/:subject", async (req, res) => {
+  const { subject } = req.params;
+  try {
+    const chapters = await Question.distinct("chapter", { subject });
+    res.json(chapters);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching chapters" });
+  }
+});
+
+app.get("/suggestions/topics/:chapter", async (req, res) => {
+  const { chapter } = req.params;
+  try {
+    const topics = await Question.distinct("topic", { chapter });
+    res.json(topics);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching topics" });
   }
 });
 

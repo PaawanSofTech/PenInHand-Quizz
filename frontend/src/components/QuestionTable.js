@@ -11,17 +11,68 @@ import {
   IconButton,
   Card,
   CardContent,
+  Container,
+  AppBar,
+  Toolbar,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { createTheme, ThemeProvider, CssBaseline } from "@mui/material"; // Corrected import
+import Brightness4Icon from "@mui/icons-material/Brightness4"; // For Dark mode
+import Brightness7Icon from "@mui/icons-material/Brightness7"; // For Light mode
+import MenuIcon from "@mui/icons-material/Menu"; // For menu icon
+import AddIcon from "@mui/icons-material/Add"; // For Admin Panel
+import { Link } from "react-router-dom"; // Ensure Link is imported
 
 const QuestionTable = () => {
   const [questions, setQuestions] = useState([]);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [openEditModal, setOpenEditModal] = useState(false);
-  const [openImageModal, setOpenImageModal] = useState(false); // To handle image modal
-  const [imageToEnlarge, setImageToEnlarge] = useState(null); // To hold the clicked image
-  const [newImage, setNewImage] = useState(null); // To hold the uploaded image
-  const [newSolutionImage, setNewSolutionImage] = useState(null); // To hold the uploaded solution image
+  const [openImageModal, setOpenImageModal] = useState(false);
+  const [imageToEnlarge, setImageToEnlarge] = useState(null);
+  const [newImage, setNewImage] = useState(null);
+  const [newSolutionImage, setNewSolutionImage] = useState(null);
+  const [themeMode, setThemeMode] = useState("light");
+
+  // Define the theme with dynamic mode based on themeMode state
+  const createAppTheme = (mode) =>
+    createTheme({
+      typography: {
+        fontFamily: "'Inter', sans-serif", // Primary font for all text
+        h4: {
+          fontWeight: 700,
+          fontSize: "1.75rem",
+          letterSpacing: "0.5px", // Slightly increased spacing for header
+        },
+        h6: {
+          fontWeight: 600,
+          fontSize: "1.25rem",
+          letterSpacing: "0.2px",
+        },
+        body1: {
+          fontWeight: 400,
+          fontSize: "1rem",
+          letterSpacing: "0.1px",
+        },
+        button: {
+          textTransform: "none", // Remove uppercase for a modern look
+          fontWeight: 600,
+          letterSpacing: "0.1px",
+        },
+      },
+      palette: {
+        mode, // Use dynamic mode based on themeMode state
+        primary: { main: "#1976d2" },
+        secondary: { main: "#ff4081" },
+        background: {
+          default: mode === "light" ? "#f5f7fa" : "#121212",
+          paper: mode === "light" ? "#ffffff" : "#1c1c1e",
+        },
+        text: {
+          primary: mode === "light" ? "#212529" : "#e4e4e4",
+          secondary: mode === "light" ? "#495057" : "#b0b3b8",
+        },
+      },
+    });
 
   // Fetch all questions from the backend
   useEffect(() => {
@@ -37,7 +88,6 @@ const QuestionTable = () => {
     fetchQuestions();
   }, []);
 
-  // Open modal for editing
   const handleEdit = (row) => {
     setSelectedQuestion(row);
     setOpenEditModal(true);
@@ -46,45 +96,47 @@ const QuestionTable = () => {
   // Handle form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSelectedQuestion({ ...selectedQuestion, [name]: value });
+
+    // Set startingRange and endingRange to null if MCQ is selected
+    if (name === "questionType") {
+      setSelectedQuestion({
+        ...selectedQuestion,
+        questionType: value,
+        startingRange: value === "MCQ" ? null : selectedQuestion.startingRange,
+        endingRange: value === "MCQ" ? null : selectedQuestion.endingRange,
+      });
+    } else {
+      setSelectedQuestion({ ...selectedQuestion, [name]: value });
+    }
   };
 
-  // Handle image upload for question content
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onloadend = () => {
-      setNewImage(reader.result); // Set the uploaded image in base64 format
+      setNewImage(reader.result);
     };
     if (file) {
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle image upload for solution content
   const handleSolutionImageUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
     reader.onloadend = () => {
-      setNewSolutionImage(reader.result); // Set the uploaded solution image in base64 format
+      setNewSolutionImage(reader.result);
     };
     if (file) {
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle image click to enlarge it
-  const handleImageClick = (image) => {
-    setImageToEnlarge(image);
-    setOpenImageModal(true); // Open the modal to display the image
-  };
-
-  // Handle updating the question on the backend
   const handleUpdate = async () => {
     const updatedData = {
       ...selectedQuestion,
       questionContent: newImage || selectedQuestion.questionContent,
-      solutionContent: newSolutionImage || selectedQuestion.solutionContent, // Update the solution image if new one is uploaded
+      solutionContent: newSolutionImage || selectedQuestion.solutionContent,
     };
 
     try {
@@ -94,8 +146,6 @@ const QuestionTable = () => {
       );
 
       const updatedQuestion = response.data;
-
-      // Update the questions state by replacing the old question with the updated one
       setQuestions((prevQuestions) =>
         prevQuestions.map((q) =>
           q._id === updatedQuestion._id ? updatedQuestion : q
@@ -103,16 +153,24 @@ const QuestionTable = () => {
       );
 
       alert("Question updated successfully!");
-      setOpenEditModal(false); // Close the modal
-      setNewImage(null); // Reset the new image state
-      setNewSolutionImage(null); // Reset the new solution image state
+      setOpenEditModal(false);
+      setNewImage(null);
+      setNewSolutionImage(null);
     } catch (error) {
       console.error("Error updating question:", error);
     }
   };
 
-  // Handle deleting a question
+  const handleImageClick = (image) => {
+    setImageToEnlarge(image); // Set the image to be displayed in the modal
+    setOpenImageModal(true); // Open the modal
+  };
+
   const handleDelete = async () => {
+    if (!selectedQuestion?._id) {
+      alert("No question selected for deletion.");
+      return;
+    }
     try {
       await axios.delete(
         `http://193.203.163.4:5000/questions/${selectedQuestion._id}`
@@ -120,7 +178,7 @@ const QuestionTable = () => {
       setQuestions((prevQuestions) =>
         prevQuestions.filter((q) => q._id !== selectedQuestion._id)
       );
-      setOpenEditModal(false); // Close the modal after deletion
+      setOpenEditModal(false);
       alert("Question deleted successfully!");
     } catch (error) {
       console.error("Error deleting question:", error);
@@ -128,45 +186,83 @@ const QuestionTable = () => {
     }
   };
 
-  // Function to render question content (detect if it's an image or text)
-  const renderContent = (content) => {
-    if (typeof content === "string" && content.startsWith("data:image")) {
-      return (
-        <img
-          src={content}
-          alt="Question Image"
-          width="100%"
-          style={{ cursor: "pointer" }}
-          onClick={() => handleImageClick(content)}
-        />
-      );
-    }
+  // Custom styles for AppBar and its contents
+  const appBarStyles = (themeMode) => ({
+    backgroundColor: themeMode === "light" ? "#1976d2" : "#333", // Blue for light, dark for dark mode
+    boxShadow:
+      themeMode === "light"
+        ? "0 2px 5px rgba(0, 0, 0, 0.1)"
+        : "0 2px 10px rgba(0, 0, 0, 0.5)",
+  });
 
-    return <span>{content}</span>; // If not an image, render as text
+  const toolbarLeftStyles = {
+    display: "flex",
+    alignItems: "center",
   };
 
-  // Columns for the DataGrid
+  const toolbarRightStyles = {
+    display: "flex",
+    alignItems: "center",
+  };
+
+  const iconStyles = {
+    color: "#fff",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.2)",
+    },
+  };
+
+  const typographyStyles = {
+    flexGrow: 1,
+    fontWeight: 700,
+    fontSize: "1.5rem",
+    color: "#fff",
+  };
+
+  const buttonStyles = {
+    color: "#fff",
+  };
+
+  const renderContent = (content) => {
+    if (typeof content === "string" && content.startsWith("data:image")) {
+      // Render a link instead of the image itself
+      return <Button onClick={() => handleImageClick(content)}>Image</Button>;
+    }
+    return <span>{content}</span>;
+  };
+
   const columns = [
-    { field: "course", headerName: "Course", width: 150 },
-    { field: "subject", headerName: "Subject", width: 150 },
-    { field: "topic", headerName: "Topic", width: 150 },
-    { field: "chapter", headerName: "Chapter", width: 150 }, // New Chapter Column
+    { field: "quesID", headerName: "QID", width: 100 },
+    { field: "course", headerName: "Course", width: 140 },
+    { field: "subject", headerName: "Subject", width: 140 },
+    { field: "topic", headerName: "Topic", width: 140 },
+    { field: "chapter", headerName: "Chapter", width: 140 },
     {
       field: "questionContent",
       headerName: "Question",
-      width: 250,
-      renderCell: (params) => renderContent(params.row.questionContent), // Render as image or text
+      width: 150,
+      renderCell: (params) => renderContent(params.row.questionContent),
     },
     {
       field: "solutionContent",
       headerName: "Solution",
-      width: 250,
-      renderCell: (params) => renderContent(params.row.solutionContent), // Render as image or text
+      width: 150,
+      renderCell: (params) => renderContent(params.row.solutionContent),
     },
     {
       field: "correctOption",
       headerName: "Correct Option",
-      width: 150, // Correct Option Column
+      width: 125,
+    },
+    {
+      field: "startingRange",
+      headerName: "Starting Range",
+      width: 125,
+    },
+    {
+      field: "endingRange",
+      headerName: "Ending Range",
+      width: 125,
     },
     {
       field: "edit",
@@ -184,209 +280,344 @@ const QuestionTable = () => {
     },
   ];
 
+  // Toggle theme
+  const toggleTheme = () => {
+    setThemeMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+  };
+
   return (
-    <Box sx={{ height: 400, width: "100%" }}>
-      <Typography variant="h4" gutterBottom>
-        Manage Questions
-      </Typography>
-      <DataGrid
-        rows={questions}
-        columns={columns}
-        pageSize={5}
-        getRowId={(row) => row._id} // Set the row ID to the MongoDB _id
-      />
-
-      {/* Edit Modal */}
-      <Modal open={openEditModal} onClose={() => setOpenEditModal(false)}>
-        <Box
-          sx={{
-            padding: 4,
-            backgroundColor: "white",
-            margin: "auto",
-            width: 500,
-            maxHeight: "90vh", // Limit the height of the modal
-            overflowY: "auto", // Enable vertical scrolling
-          }}
-        >
-          <Typography variant="h6">Edit Question</Typography>
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Course"
-            name="course"
-            value={selectedQuestion?.course}
-            onChange={handleInputChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Subject"
-            name="subject"
-            value={selectedQuestion?.subject}
-            onChange={handleInputChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Topic"
-            name="topic"
-            value={selectedQuestion?.topic}
-            onChange={handleInputChange}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            label="Chapter" // Added chapter field in modal
-            name="chapter"
-            value={selectedQuestion?.chapter}
-            onChange={handleInputChange}
-          />
-
-          {/* Question Content */}
-          {selectedQuestion?.questionContent &&
-          selectedQuestion.questionContent.startsWith("data:image") ? (
-            <div>
-              <Typography variant="body1">Current Image:</Typography>
-              <img
-                src={newImage || selectedQuestion.questionContent}
-                alt="Current Question"
-                width="100%"
-              />
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ marginTop: 2 }}
+    <ThemeProvider theme={createAppTheme(themeMode)}>
+      <CssBaseline />
+      <Box sx={{ minHeight: "100vh" }}>
+        {/* Navbar */}
+        <AppBar position="static" sx={appBarStyles(themeMode)}>
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+            {/* Left Section: Menu Icon and Title */}
+            <Box sx={toolbarLeftStyles}>
+              <IconButton
+                edge="start"
+                color="inherit"
+                aria-label="menu"
+                sx={iconStyles}
               >
-                Upload New Image
-                <input type="file" hidden onChange={handleImageUpload} />
-              </Button>
-            </div>
-          ) : (
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Question Content"
-              name="questionContent"
-              value={selectedQuestion?.questionContent}
-              onChange={handleInputChange}
-            />
-          )}
+                <MenuIcon />
+              </IconButton>
+              <Typography variant="h6" sx={typographyStyles}>
+                Admin Panel
+              </Typography>
+            </Box>
 
-          {/* Solution Content */}
-          {selectedQuestion?.solutionContent &&
-          selectedQuestion.solutionContent.startsWith("data:image") ? (
-            <div>
-              <Typography variant="body1">Current Solution Image:</Typography>
-              <img
-                src={newSolutionImage || selectedQuestion.solutionContent}
-                alt="Current Solution"
-                width="100%"
-              />
-              <Button
-                variant="contained"
-                component="label"
-                sx={{ marginTop: 2 }}
+            {/* Right Section: Manage Questions Button and Theme Toggle */}
+            <Box sx={toolbarRightStyles}>
+              <Link to="/" color="inherit" underline="none">
+                {" "}
+                {/* Use 'to' instead of 'href' */}
+                <Button sx={buttonStyles} startIcon={<AddIcon />}>
+                  Add Question
+                </Button>
+              </Link>
+
+              {/* Theme Toggle Button */}
+              <IconButton
+                color="inherit"
+                onClick={toggleTheme}
+                aria-label="Toggle light/dark theme"
+                sx={iconStyles}
               >
-                Upload New Solution Image
-                <input
-                  type="file"
-                  hidden
-                  onChange={handleSolutionImageUpload}
-                />
-              </Button>
-            </div>
-          ) : (
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Solution Content"
-              name="solutionContent"
-              value={selectedQuestion?.solutionContent}
-              onChange={handleInputChange}
-            />
-          )}
+                {themeMode === "light" ? (
+                  <Brightness4Icon />
+                ) : (
+                  <Brightness7Icon />
+                )}
+              </IconButton>
+            </Box>
+          </Toolbar>
+        </AppBar>
 
-          {/* Correct Option */}
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="correct-option-label">Correct Option</InputLabel>
-            <Select
-              labelId="correct-option-label"
-              id="correct-option"
-              value={selectedQuestion?.correctOption || ""} // Use selectedQuestion.correctOption
-              onChange={(e) =>
-                setSelectedQuestion({
-                  ...selectedQuestion,
-                  correctOption: e.target.value,
-                })
-              }
-              label="Correct Option"
-            >
-              {/* Assuming the correct options are "Option 1", "Option 2", etc. */}
-              <MenuItem value="A">A</MenuItem>
-              <MenuItem value="B">B</MenuItem>
-              <MenuItem value="C">C</MenuItem>
-              <MenuItem value="D">D</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleUpdate}
-            sx={{
-              marginTop: 2,
-              padding: "8px 16px",
-            }}
-          >
-            Save Changes
-          </Button>
-
-          {/* Delete Question Button */}
-          {/* <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            sx={{
-              marginTop: 2,
-              padding: "8px 16px",
-              marginLeft: 2,
-            }}
-          >
-            Delete Question
-          </Button> */}
-        </Box>
-      </Modal>
-
-      {/* Image Enlarge Modal */}
-      <Modal open={openImageModal} onClose={() => setOpenImageModal(false)}>
         <Box
           sx={{
             display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "100vh",
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            justifyContent: "center", // Horizontally center the Card
+            alignItems: "center", // Vertically center the Card (optional)
+            height: "100vh", // Make sure it takes up the full viewport height
           }}
         >
-          <Card sx={{ position: "relative", maxWidth: 600, maxHeight: 600 }}>
-            <IconButton
-              sx={{ position: "absolute", top: 0, right: 0, color: "white" }}
-              onClick={() => setOpenImageModal(false)} // Close the image modal
+          <Card
+            elevation={6}
+            sx={{
+              p: 2,
+              borderRadius: 3,
+              boxShadow: "0px 8px 16px rgba(0,0,0,0.2)",
+              width: "100%",
+              maxWidth: "1620px",
+              height: "500px",
+              overflowY: "auto",
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{ padding: "16px", marginBottom: "16px", fontWeight: 700 }}
             >
-              <CloseIcon />
-            </IconButton>
-            <CardContent>
-              <img
-                src={imageToEnlarge}
-                alt="Enlarged"
-                width="100%"
-                style={{ maxHeight: "500px" }}
-              />
-            </CardContent>
+              Manage Questions
+            </Typography>
+            <DataGrid
+              rows={questions}
+              columns={columns}
+              pageSize={10} // Set the initial number of questions to display
+              getRowId={(row) => row._id}
+              sx={{
+                width: "100%", // Set the width of the DataGrid to 100% of its container
+                height: "400px", // Set a fixed height for DataGrid
+              }}
+            />
+
+            {/* Edit Modal */}
+            <Modal open={openEditModal} onClose={() => setOpenEditModal(false)}>
+              <Box
+                sx={{
+                  padding: 4,
+                  backgroundColor: "white",
+                  margin: "auto",
+                  width: 500,
+                  maxHeight: "90vh",
+                  overflowY: "auto",
+                }}
+              >
+                <Typography variant="h6">Edit Question</Typography>
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Course"
+                  name="course"
+                  value={selectedQuestion?.course}
+                  onChange={handleInputChange}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Subject"
+                  name="subject"
+                  value={selectedQuestion?.subject}
+                  onChange={handleInputChange}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Topic"
+                  name="topic"
+                  value={selectedQuestion?.topic}
+                  onChange={handleInputChange}
+                />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Chapter"
+                  name="chapter"
+                  value={selectedQuestion?.chapter}
+                  onChange={handleInputChange}
+                />
+
+                {/* Question Image Upload */}
+                {selectedQuestion?.questionContent &&
+                selectedQuestion.questionContent.startsWith("data:image") ? (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body1">
+                      Current Question Image:
+                    </Typography>
+                    <img
+                      src={newImage || selectedQuestion.questionContent}
+                      alt="Current Question"
+                      width="100%"
+                    />
+                    <Button
+                      variant="contained"
+                      component="label"
+                      sx={{ mt: 2 }}
+                    >
+                      Upload New Image
+                      <input type="file" hidden onChange={handleImageUpload} />
+                    </Button>
+                  </Box>
+                ) : (
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Question Content"
+                    name="questionContent"
+                    value={selectedQuestion?.questionContent}
+                    onChange={handleInputChange}
+                  />
+                )}
+
+                {/* Solution Image Upload */}
+                {selectedQuestion?.solutionContent &&
+                selectedQuestion.solutionContent.startsWith("data:image") ? (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body1">
+                      Current Solution Image:
+                    </Typography>
+                    <img
+                      src={newSolutionImage || selectedQuestion.solutionContent}
+                      alt="Current Solution"
+                      width="100%"
+                    />
+                    <Button
+                      variant="contained"
+                      component="label"
+                      sx={{ mt: 2 }}
+                    >
+                      Upload New Solution Image
+                      <input
+                        type="file"
+                        hidden
+                        onChange={handleSolutionImageUpload}
+                      />
+                    </Button>
+                  </Box>
+                ) : (
+                  <TextField
+                    fullWidth
+                    margin="normal"
+                    label="Solution Content"
+                    name="solutionContent"
+                    value={selectedQuestion?.solutionContent}
+                    onChange={handleInputChange}
+                  />
+                )}
+
+                {/* Question Type Selector */}
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Question Type</InputLabel>
+                  <Select
+                    label="Question Type"
+                    name="questionType"
+                    value={selectedQuestion?.questionType || ""}
+                    onChange={handleInputChange}
+                  >
+                    <MenuItem value="MCQ">MCQ</MenuItem>
+                    <MenuItem value="Numerical">Numerical</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Conditional Correct Option Fields */}
+                {selectedQuestion?.questionType && (
+                  <>
+                    {selectedQuestion.questionType === "Numerical" ? (
+                      <>
+                        <TextField
+                          fullWidth
+                          margin="normal"
+                          label="Starting Range"
+                          name="startingRange"
+                          value={selectedQuestion?.startingRange || ""}
+                          onChange={handleInputChange}
+                        />
+                        <TextField
+                          fullWidth
+                          margin="normal"
+                          label="Ending Range"
+                          name="endingRange"
+                          value={selectedQuestion?.endingRange || ""}
+                          onChange={handleInputChange}
+                        />
+                        <TextField
+                          fullWidth
+                          margin="normal"
+                          label="Correct Option"
+                          name="correctOption"
+                          value={selectedQuestion?.correctOption}
+                          onChange={handleInputChange}
+                        />
+                      </>
+                    ) : (
+                      <FormControl fullWidth margin="normal">
+                        <InputLabel>Correct Option</InputLabel>
+                        <Select
+                          label="Correct Option"
+                          name="correctOption"
+                          value={selectedQuestion?.correctOption || ""}
+                          onChange={handleInputChange}
+                        >
+                          <MenuItem value="A">A</MenuItem>
+                          <MenuItem value="B">B</MenuItem>
+                          <MenuItem value="C">C</MenuItem>
+                          <MenuItem value="D">D</MenuItem>
+                        </Select>
+                      </FormControl>
+                    )}
+                  </>
+                )}
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleUpdate}
+                  sx={{
+                    marginTop: 2,
+                    padding: "8px 16px",
+                  }}
+                >
+                  Save Changes
+                </Button>
+
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleDelete}
+                  sx={{
+                    marginTop: 2,
+                    padding: "8px 16px",
+                    marginLeft: 2,
+                  }}
+                >
+                  Delete Question
+                </Button>
+              </Box>
+            </Modal>
+
+            {/* Image Enlarge Modal */}
+            <Modal
+              open={openImageModal}
+              onClose={() => setOpenImageModal(false)}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100vh",
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                }}
+              >
+                <Card
+                  sx={{ position: "relative", maxWidth: 600, maxHeight: 600 }}
+                >
+                  <IconButton
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      color: "white",
+                    }}
+                    onClick={() => setOpenImageModal(false)}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                  <CardContent>
+                    <img
+                      src={imageToEnlarge}
+                      alt="Enlarged"
+                      width="100%"
+                      style={{ maxHeight: "500px" }}
+                    />
+                  </CardContent>
+                </Card>
+              </Box>
+            </Modal>
           </Card>
         </Box>
-      </Modal>
-    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
