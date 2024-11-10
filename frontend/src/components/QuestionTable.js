@@ -32,6 +32,7 @@ const QuestionTable = () => {
   const [newImage, setNewImage] = useState(null);
   const [newSolutionImage, setNewSolutionImage] = useState(null);
   const [themeMode, setThemeMode] = useState("light");
+  const [loading, setLoading] = useState(true); // Added loading state
 
   // Define the theme with dynamic mode based on themeMode state
   const createAppTheme = (mode) =>
@@ -78,10 +79,13 @@ const QuestionTable = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        setLoading(true); // Start loading
         const response = await axios.get("http://193.203.163.4:5000/questions");
         setQuestions(response.data);
       } catch (error) {
         console.error("Error fetching questions:", error);
+      } finally {
+        setLoading(false); // Stop loading after data is fetched
       }
     };
 
@@ -310,8 +314,6 @@ const QuestionTable = () => {
             {/* Right Section: Manage Questions Button and Theme Toggle */}
             <Box sx={toolbarRightStyles}>
               <Link to="/" color="inherit" underline="none">
-                {" "}
-                {/* Use 'to' instead of 'href' */}
                 <Button sx={buttonStyles} startIcon={<AddIcon />}>
                   Add Question
                 </Button>
@@ -365,6 +367,14 @@ const QuestionTable = () => {
               columns={columns}
               pageSize={10} // Set the initial number of questions to display
               getRowId={(row) => row._id}
+              loading={loading} // Set the loading state to true while fetching data
+              components={{
+                NoRowsOverlay: () => (
+                  <div style={{ textAlign: "center", padding: "20px" }}>
+                    {loading ? "Loading Rows..." : "No rows"}
+                  </div>
+                ),
+              }}
               sx={{
                 width: "100%", // Set the width of the DataGrid to 100% of its container
                 height: "400px", // Set a fixed height for DataGrid
@@ -597,7 +607,7 @@ const QuestionTable = () => {
                       position: "absolute",
                       top: 0,
                       right: 0,
-                      color: "white",
+                      color: "black",
                     }}
                     onClick={() => setOpenImageModal(false)}
                   >
