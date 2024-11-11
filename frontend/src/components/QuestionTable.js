@@ -239,8 +239,9 @@ const QuestionTable = () => {
     { field: "quesID", headerName: "QID", width: 100 },
     { field: "course", headerName: "Course", width: 140 },
     { field: "subject", headerName: "Subject", width: 140 },
-    { field: "topic", headerName: "Topic", width: 140 },
     { field: "chapter", headerName: "Chapter", width: 140 },
+    { field: "topic", headerName: "Topic", width: 140 },
+    
     {
       field: "questionContent",
       headerName: "Question",
