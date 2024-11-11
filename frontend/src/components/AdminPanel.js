@@ -236,8 +236,10 @@ const AdminPanel = () => {
               <FormControl fullWidth margin="normal">
                 <InputLabel>Course</InputLabel>
                 <Select label="Course" name="course" value={formData.course} onChange={handleInputChange}>
-                  <MenuItem value="JEE">JEE</MenuItem>
-                  <MenuItem value="NEET">NEET</MenuItem>
+                  <MenuItem value="11th - JEE Mains">11th - JEE Mains</MenuItem>
+                  <MenuItem value="11th - NEET">11th - NEET</MenuItem>
+                  <MenuItem value="12th - JEE Mains">12th - JEE Mains</MenuItem>
+                  <MenuItem value="12th - NEET">12th - NEET</MenuItem>
                 </Select>
               </FormControl>
 
