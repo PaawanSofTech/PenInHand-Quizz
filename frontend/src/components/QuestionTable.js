@@ -414,19 +414,20 @@ const QuestionTable = () => {
                 <TextField
                   fullWidth
                   margin="normal"
-                  label="Topic"
-                  name="topic"
-                  value={selectedQuestion?.topic}
-                  onChange={handleInputChange}
-                />
-                <TextField
-                  fullWidth
-                  margin="normal"
                   label="Chapter"
                   name="chapter"
                   value={selectedQuestion?.chapter}
                   onChange={handleInputChange}
                 />
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Topic"
+                  name="topic"
+                  value={selectedQuestion?.topic}
+                  onChange={handleInputChange}
+                />
+                
 
                 {/* Question Image Upload */}
                 {selectedQuestion?.questionContent &&
