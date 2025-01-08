@@ -15,7 +15,7 @@ const QuestionTable = () => {
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`http://localhost:5000/questions?page=${currentPage}&limit=50`);
+      const { data } = await axios.get(`http://193.203.163.4:5000/questions?page=${currentPage}&limit=50`);
       const total = data.total || 0;
       setQuestions(data.questions || []);
       setTotalPages(Math.ceil(total / 50));
@@ -45,7 +45,7 @@ const QuestionTable = () => {
 
   const handleDelete = async (questionId) => {
     try {
-      await axios.delete(`http://localhost:5000/questions/${questionId}`);
+      await axios.delete(`http://193.203.163.4/:5000/questions/${questionId}`);
       fetchQuestions(); // Refresh the table after deletion
     } catch (error) {
       console.error('Error deleting question:', error);
