@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
-require('dotenv').config();  // Load environment variables from .env
+require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 app.use(cors());
@@ -11,71 +11,48 @@ app.use(express.json({ limit: '500mb' }));
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,  // 30 seconds
+  serverSelectionTimeoutMS: 30000, // 30 seconds
 }).then(() => {
   console.log('Connected to MongoDB');
 }).catch((error) => {
   console.error('MongoDB connection error:', error);
 });
 
-// Update questionSchema to include questionType with default "MCQ"
+// Schema definition
 const questionSchema = new mongoose.Schema({
   quesID: { type: String, unique: true },
-  course: {
-    type: String,
-    required: [true, 'Course is required'], // Make course required
-  },
-  subject: {
-    type: String,
-    required: [true, 'Subject is required'], // Make subject required
-  },
-  topic: {
-    type: String,
-    required: [true, 'Topic is required'], // Make topic required
-  },
-  chapter: {
-    type: String,
-    required: [true, 'Chapter is required'], // Make chapter required
-  },
+  course: { type: String, required: [true, 'Course is required'] },
+  subject: { type: String, required: [true, 'Subject is required'] },
+  topic: { type: String, required: [true, 'Topic is required'] },
+  chapter: { type: String, required: [true, 'Chapter is required'] },
   tags: String,
-  questionContent: {
-    type: String,
-    required: [true, 'Question content is required'], // Make questionContent required
-  },
-  solutionContent: {
-    type: String,
-    required: [true, 'Solution content is required'], // Make solutionContent required
-  },
-  correctOption: {
-    type: String,
-    required: [true, 'Correct option is required'], // Make correctOption required
-  },
-  questionType: {
-    type: String,
-    enum: ["MCQ", "Numerical"],
-    default: "MCQ",
-    required: [true, 'Question type is required'], // Make questionType required
-  },
+  questionContent: { type: String, required: [true, 'Question content is required'] },
+  solutionContent: { type: String, required: [true, 'Solution content is required'] },
+  correctOption: { type: String, required: [true, 'Correct option is required'] },
+  questionType: { type: String, enum: ["MCQ", "Numerical"], default: "MCQ" },
   startingRange: {
     type: String,
-    required: function() { return this.questionType === 'Numerical'; } // Make startingRange required if questionType is Numerical
+    required: function () { return this.questionType === 'Numerical'; }
   },
   endingRange: {
     type: String,
-    required: function() { return this.questionType === 'Numerical'; } // Make endingRange required if questionType is Numerical
+    required: function () { return this.questionType === 'Numerical'; }
   }
 });
-
 
 const Question = mongoose.model('Question', questionSchema);
 
 app.get('/', (req, res) => {
-  res.send("Server running & Reachable");
+  res.send("Server running & reachable");
 });
 
-// Update the upload route to include questionType
+// Upload route
 app.post('/upload', async (req, res) => {
   const { course, subject, topic, chapter, tags, questionContent, solutionContent, correctOption, questionType, startingRange, endingRange } = req.body;
+
+  if (!course || !subject || !topic || !questionContent || !solutionContent || !correctOption) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
 
   const newQuestion = new Question({
     quesID: uuidv4(),
@@ -87,7 +64,7 @@ app.post('/upload', async (req, res) => {
     questionContent,
     solutionContent,
     correctOption,
-    questionType,  // Include questionType in the new question data
+    questionType,
     startingRange,
     endingRange
   });
@@ -101,18 +78,37 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-// Route to fetch all questions for the data table, including questionType
+// Fetch all questions with pagination
 app.get('/questions', async (req, res) => {
+  const { page = 1, limit = 50, lastQuesID } = req.query; // Assuming `lastQuesID` will be passed to fetch the next page of results
+
   try {
-    const questions = await Question.find();
-    res.json(questions);
+    console.log('Fetching questions for page:', page, 'limit:', limit); // Log request details
+
+    const query = lastQuesID
+      ? { quesID: { $gt: lastQuesID } } // Get the next set of questions based on quesID
+      : {};
+
+    const questions = await Question.find(query)
+      .limit(Number(limit))
+      .sort({ quesID: 1 }); // Sort by quesID to maintain order
+
+    const total = await Question.countDocuments(query);
+
+    res.json({
+      questions,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+    });
   } catch (error) {
     console.error('Error fetching questions:', error);
     res.status(500).json({ message: 'Error fetching questions' });
   }
 });
 
-// Route to update a question based on its ID
+
+// Update a question
 app.put('/questions/:id', async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
@@ -129,7 +125,7 @@ app.put('/questions/:id', async (req, res) => {
   }
 });
 
-// Route to delete a question
+// Delete a question
 app.delete('/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -144,7 +140,7 @@ app.delete('/questions/:id', async (req, res) => {
   }
 });
 
-// server.js
+// Suggestion endpoints
 app.get("/suggestions/subjects", async (req, res) => {
   try {
     const subjects = ["Physics", "Chemistry", "Mathematics", "Biology"]; // Static for PCMB
@@ -172,6 +168,12 @@ app.get("/suggestions/topics/:chapter", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Error fetching topics" });
   }
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err.message);
+  res.status(500).json({ message: 'Internal Server Error' });
 });
 
 // Start the server
