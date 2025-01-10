@@ -92,7 +92,7 @@ const AdminPanel = () => {
     const fetchSubjectSuggestions = async () => {
       try {
         const response = await axios.get(
-          "http://193.203.163.4:5000/suggestions/subjects"
+          "http://localhost:5000/suggestions/subjects"
         );
         setSubjectSuggestions(response.data);
       } catch (error) {
@@ -106,7 +106,7 @@ const AdminPanel = () => {
     if (!subject) return;
     try {
       const response = await axios.get(
-        `http://193.203.163.4:5000/suggestions/chapters/${subject}`
+        `http://localhost:5000/suggestions/chapters/${subject}`
       );
       setChapterSuggestions(response.data);
     } catch (error) {
@@ -118,7 +118,7 @@ const AdminPanel = () => {
     if (!chapter) return;
     try {
       const response = await axios.get(
-        `http://193.203.163.4:5000/suggestions/topics/${chapter}`
+        `http://localhost:5000/suggestions/topics/${chapter}`
       );
       setTopicSuggestions(response.data);
     } catch (error) {
@@ -161,7 +161,7 @@ const AdminPanel = () => {
   
     try {
       // Send a POST request with formData
-      const response = await axios.post("http://193.203.163.4:5000/upload", formData);
+      const response = await axios.post("http://localhost:5000/upload", formData);
   
       if (response.status === 200) {  // Check for a successful response
         // Show a success notification
